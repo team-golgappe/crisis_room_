@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crisis Room Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:       #FBFAF7;
+    --surface:     #F3F1EA;
+    --ink:         #1B1C1E;
+    --ink-soft:    #56575A;
+    --ink-faint:   #8B8A84;
+    --rule:        #E4E0D5;
+    --rule-strong: #CDC7B7;
+    --amber:       #A5670F;
+    --amber-bright:#E6981F;
+    --teal:        #2C6F67;
+    --crit:        #AE372F;
+
+    --measure: 68ch;
+    --fs-body: 17px;
+    --lh-body: 1.62;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:       #131315;
+      --surface:     #1B1C1F;
+      --ink:         #ECEAE3;
+      --ink-soft:    #ABA9A1;
+      --ink-faint:   #78766E;
+      --rule:        #2D2E32;
+      --rule-strong: #3D3E44;
+      --amber:       #E6981F;
+      --amber-bright:#F2A93B;
+      --teal:        #5FBAAE;
+      --crit:        #E5726B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:       #131315;
+    --surface:     #1B1C1F;
+    --ink:         #ECEAE3;
+    --ink-soft:    #ABA9A1;
+    --ink-faint:   #78766E;
+    --rule:        #2D2E32;
+    --rule-strong: #3D3E44;
+    --amber:       #E6981F;
+    --amber-bright:#F2A93B;
+    --teal:        #5FBAAE;
+    --crit:        #E5726B;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--surface); }
+
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, "Times New Roman", serif;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .doc {
+    max-width: 800px;
+    margin: 40px auto;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 60px 64px 72px;
+  }
+
+  /* ---------- typography ---------- */
+  p { margin: 0 0 0.9em; max-width: var(--measure); }
+  p.lead {
+    font-size: 1.16em;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  strong { font-weight: 600; }
+  em { color: var(--ink-soft); }
+
+  h1, h2, h3, h4 {
+    font-family: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+    text-wrap: balance;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  .eyebrow {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 10px;
+  }
+
+  section.block { margin-top: 46px; }
+  section.block > h2 {
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 22px;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    margin: 26px 0 8px;
+  }
+
+  ul, ol { max-width: var(--measure); padding-left: 1.15em; margin: 0 0 1em; }
+  li { margin: 0 0 0.5em; padding-left: 0.15em; }
+  li::marker { color: var(--amber); }
+
+  a { color: var(--teal); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+
+  code, .mono {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+  }
+  code {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.05em 0.35em;
+  }
+
+  /* ---------- cover ---------- */
+  .cover { padding-bottom: 8px; }
+  .cover .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .cover .brand svg { display: block; }
+  .cover .brand .wordmark {
+    font-family: "DotGothic16", "JetBrains Mono", monospace;
+    font-size: 15px;
+    letter-spacing: 0.22em;
+    color: var(--ink);
+    padding-top: 3px;
+  }
+  .cover h1 {
+    font-family: "DotGothic16", "Space Grotesk", monospace;
+    font-weight: 400;
+    font-size: 52px;
+    line-height: 1.04;
+    letter-spacing: 0.01em;
+    margin: 0 0 18px;
+  }
+  .cover .tagline {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    max-width: 34ch;
+    line-height: 1.35;
+    margin: 0 0 34px;
+  }
+  .pulse-rule { width: 100%; height: 34px; margin: 30px 0; color: var(--amber-bright); }
+  .pulse-rule svg { width: 100%; height: 100%; display: block; }
+
+  .cover .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.9;
+    color: var(--ink-soft);
+    margin-top: 30px;
+  }
+  .cover .meta b { color: var(--ink); font-weight: 500; }
+
+  /* ---------- at-a-glance ---------- */
+  .glance {
+    margin-top: 40px;
+    border: 1px solid var(--rule-strong);
+    background: var(--surface);
+  }
+  .glance dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; }
+  .glance dt {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+  }
+  .glance dd {
+    margin: 0;
+    padding: 12px 18px;
+    font-size: 15px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .glance dt:last-of-type, .glance dd:last-of-type { border-bottom: none; }
+
+  /* ---------- contents ---------- */
+  .toc { margin-top: 42px; }
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    max-width: 100%;
+    columns: 2;
+    column-gap: 46px;
+  }
+  .toc li {
+    display: flex;
+    gap: 12px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--rule);
+    break-inside: avoid;
+  }
+  .toc li .n {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--amber);
+    min-width: 1.6em;
+  }
+
+  /* ---------- tables ---------- */
+  .tbl-wrap { overflow-x: auto; margin: 18px 0 8px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  caption {
+    caption-side: top;
+    text-align: left;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-bottom: 8px;
+  }
+  th {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border-bottom: 1.5px solid var(--ink);
+    padding: 9px 14px 9px 0;
+    vertical-align: bottom;
+  }
+  td {
+    padding: 10px 14px 10px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  td:last-child, th:last-child { padding-right: 0; }
+  td .mono { color: var(--ink-soft); }
+  tr .act {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--amber);
+    white-space: nowrap;
+  }
+
+  /* ---------- lifecycle ---------- */
+  .steps { counter-reset: step; margin-top: 8px; }
+  .step {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 18px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+    break-inside: avoid;
+  }
+  .step:last-child { border-bottom: none; }
+  .step::before {
+    counter-increment: step;
+    content: counter(step, decimal-leading-zero);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    color: var(--amber);
+    padding-top: 2px;
+  }
+  .step h3 { margin: 0 0 3px; }
+  .step p { margin: 0; font-size: 15px; }
+
+  /* ---------- diagram ---------- */
+  .flow {
+    margin: 18px 0;
+    padding: 20px 22px;
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--ink-soft);
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .flow b { color: var(--ink); font-weight: 500; }
+
+  /* ---------- stack ---------- */
+  .stack { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 40px; margin-top: 10px; }
+  .stack section { break-inside: avoid; }
+  .stack h3 { margin-top: 0; }
+  .stack ul { list-style: none; padding: 0; margin: 0; max-width: 100%; }
+  .stack li {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .stack li span { color: var(--ink-faint); text-align: right; font-size: 11.5px; }
+
+  .callout {
+    margin: 20px 0;
+    padding: 16px 20px;
+    border-left: 3px solid var(--amber-bright);
+    background: var(--surface);
+    font-size: 15px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .status-key { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
+  .status-key > div {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+    break-inside: avoid;
+  }
+  .status-key .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+  .status-key .ok  { color: var(--teal); }
+  .status-key .bad { color: var(--crit); }
+  .status-key .wait { color: var(--amber); }
+  .status-key p { margin: 0; font-size: 14.5px; }
+
+  footer.brief-foot {
+    margin-top: 56px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ---------- print ---------- */
+  @page { size: A4; margin: 17mm 15mm 18mm; }
+
+  @media print {
+    :root {
+      --paper: #ffffff;
+      --surface: #F4F2EC;
+      --ink: #16171A;
+      --ink-soft: #45464A;
+      --ink-faint: #6E6E6A;
+      --rule: #DAD6CA;
+      --rule-strong: #BFB9A8;
+      --amber: #8C560B;
+      --amber-bright: #C77E1A;
+      --teal: #235952;
+      --crit: #953029;
+      --fs-body: 10.5pt;
+    }
+    html, body { background: #fff; }
+    .doc {
+      max-width: none;
+      margin: 0;
+      border: none;
+      padding: 0;
+    }
+    section.block { margin-top: 34px; }
+    section.block > h2 { break-after: avoid; }
+    .toc { break-before: page; }
+    .block:nth-of-type(1) { break-before: avoid; }  /* Summary follows the contents page */
+    p.eyebrow { break-after: avoid; }
+    h3 { break-after: avoid; }
+    tr, .step { break-inside: avoid; }
+    .flow, .glance, .callout, .stack section, .status-key > div, caption + * { break-inside: avoid; }
+    .tbl-wrap { break-inside: auto; }
+    a { color: var(--ink); border-bottom: none; }
+    .pulse-rule { color: var(--amber-bright); }
+  }
+
+  @media (max-width: 640px) {
+    .doc { padding: 32px 22px 44px; margin: 0; border: none; }
+    .cover h1 { font-size: 38px; }
+    .stack, .toc ol { grid-template-columns: 1fr; columns: 1; }
+    .glance dl { grid-template-columns: 1fr; }
+    .glance dt { border-right: none; }
+    .step { grid-template-columns: 32px 1fr; gap: 12px; }
+    .status-key > div { grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="doc">
+
+  <!-- ============ COVER ============ -->
+  <section class="cover">
+    <div class="brand">
+      <svg width="46" height="37" viewBox="32 96 432 350" fill="none" aria-hidden="true">
+        <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M96 250 H186" stroke="var(--teal)" stroke-width="14"/>
+          <path d="M120 314 H238" stroke="var(--teal)" stroke-width="14"/>
+          <path d="M150 340 H210" stroke="var(--teal)" stroke-width="14"/>
+          <path d="M158 300 V202 L256 138 L354 202 V300" stroke="var(--amber-bright)" stroke-width="13" opacity="0.72"/>
+          <path d="M44 264 H196 L212 292 L228 264 L268 108 L300 434 L330 264 H398" stroke="var(--amber-bright)" stroke-width="24"/>
+        </g>
+        <circle cx="430" cy="264" r="17" fill="var(--amber-bright)"/>
+      </svg>
+      <span class="wordmark">CRISIS ROOM</span>
+    </div>
+
+    <p class="eyebrow">Project Brief</p>
+    <h1>Crisis Room</h1>
+    <p class="tagline">Automated incident response &mdash; detect, diagnose, decide, resolve.</p>
+
+    <div class="pulse-rule" aria-hidden="true">
+      <svg viewBox="0 0 1200 34" preserveAspectRatio="none" fill="none">
+        <path d="M0 17 H520 L545 5 L565 29 L586 17 L636 17 L662 3 L688 31 L714 17 H1200"
+              stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+      </svg>
+    </div>
+
+    <div class="glance">
+      <dl>
+        <dt>What it is</dt>
+        <dd>A platform that runs the full incident-response workflow automatically &mdash; from detecting a failing service to applying the fix and confirming recovery.</dd>
+        <dt>Who it&rsquo;s for</dt>
+        <dd>Engineering and operations teams who carry a pager: anyone responsible for keeping a production service up.</dd>
+        <dt>Status</dt>
+        <dd>Working implementation, verified end to end. Not a mockup.</dd>
+        <dt>Team</dt>
+        <dd>Gol_Gappe &mdash; Riddhika Sachdeva &amp; Hemank, MAIT, Delhi.</dd>
+      </dl>
+    </div>
+
+    <p class="meta">
+      <b>Build with Bharat 2.0</b> &nbsp;&middot;&nbsp; National Level Hackathon<br>
+      NIT Delhi &nbsp;&middot;&nbsp; organized by CodeVerse
+    </p>
+  </section>
+
+  <!-- ============ CONTENTS ============ -->
+  <section class="toc" aria-label="Contents">
+    <p class="eyebrow">Contents</p>
+    <ol>
+      <li><span class="n">01</span> Summary</li>
+      <li><span class="n">02</span> The problem</li>
+      <li><span class="n">03</span> What Crisis Room does</li>
+      <li><span class="n">04</span> The four-agent pipeline</li>
+      <li><span class="n">05</span> The incident lifecycle</li>
+      <li><span class="n">06</span> Detection &mdash; two ways in</li>
+      <li><span class="n">07</span> Diagnosis and decision</li>
+      <li><span class="n">08</span> Real remediation</li>
+      <li><span class="n">09</span> Honest outcomes</li>
+      <li><span class="n">10</span> Communication</li>
+      <li><span class="n">11</span> Two surfaces</li>
+      <li><span class="n">12</span> System architecture</li>
+      <li><span class="n">13</span> Data model</li>
+      <li><span class="n">14</span> Design principles</li>
+      <li><span class="n">15</span> Technology</li>
+      <li><span class="n">16</span> What is built today</li>
+      <li><span class="n">17</span> Roadmap</li>
+      <li><span class="n">18</span> Appendix</li>
+    </ol>
+  </section>
+
+  <!-- ============ 01 ============ -->
+  <section class="block">
+    <p class="eyebrow">01</p>
+    <h2>Summary</h2>
+    <p class="lead">Crisis Room handles a production incident the way a well-drilled on-call team would &mdash; except four specialized agents share the work, move in seconds, and show every step as it happens.</p>
+    <p>When a monitored service starts failing, Crisis Room opens an incident on its own and works it end to end: it classifies how severe the problem is, works out the most likely cause, chooses a single remediation and explains why, applies that fix, watches the service recover, and drafts the updates that customers, engineers, and leadership each need. Every stage is streamed live to a dashboard, and every decision is recorded and inspectable.</p>
+    <p>It plugs into the monitoring tools a team already runs, and its execution layer is built so the same system that fixes a sandboxed test service today can drive real infrastructure tomorrow without a rewrite.</p>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section class="block">
+    <p class="eyebrow">02</p>
+    <h2>The problem</h2>
+    <p>When a service breaks at 2:47 in the morning, one on-call engineer has to do four jobs at once, under a clock, while revenue and users drain away:</p>
+    <ul>
+      <li><strong>Assess</strong> &mdash; how bad is this, and who needs to be pulled in?</li>
+      <li><strong>Investigate</strong> &mdash; what actually changed? A deploy, a dependency, capacity, the network?</li>
+      <li><strong>Decide</strong> &mdash; roll back, restart, scale, fail over &mdash; and be right the first time.</li>
+      <li><strong>Communicate</strong> &mdash; keep customers, the engineering channel, and leadership informed, each in the register they expect.</li>
+    </ul>
+    <p>The context needed to do this is scattered across dashboards, logs, and chat threads. The steps are done in sequence when they could be done in parallel. And the whole response depends on the judgment of whoever happens to be holding the pager that night. Minutes of delay are measured in money and trust.</p>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section class="block">
+    <p class="eyebrow">03</p>
+    <h2>What Crisis Room does</h2>
+    <p>Crisis Room automates the entire response loop. You tell it which services to watch. From then on:</p>
+    <ul>
+      <li>It <strong>watches</strong> those services and opens an incident the moment one genuinely degrades &mdash; not on a single blip, but on sustained failure.</li>
+      <li>It <strong>runs the response</strong> through four specialized agents that hand off to each other through a strict shared format.</li>
+      <li>It <strong>executes</strong> the chosen fix through a pluggable action layer and measures the real recovery, tick by tick.</li>
+      <li>It <strong>reports</strong> the outcome by email and Slack, and keeps a full, replayable timeline of every incident.</li>
+      <li>It <strong>shows its work</strong> &mdash; a live dashboard renders each agent&rsquo;s output and its decision log as it is produced.</li>
+    </ul>
+    <p>Nothing here waits for a person to click a button. The scripted walkthroughs in the demo exist only so a presentation tells the same story every time; the real product reacts on its own.</p>
+  </section>
+
+  <!-- ============ 04 ============ -->
+  <section class="block">
+    <p class="eyebrow">04</p>
+    <h2>The four-agent pipeline</h2>
+    <p>An incident flows through four agents in order. The Communicator runs twice &mdash; once immediately, so stakeholders are never left in silence, and again at the end with the resolution.</p>
+
+    <div class="tbl-wrap">
+    <table>
+      <caption>Agents &mdash; job, input, output</caption>
+      <thead>
+        <tr><th>Agent</th><th>Job</th><th>Takes in</th><th>Produces</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Triage</strong></td>
+          <td>Classify severity fast and flag what to look at</td>
+          <td>The raw alert or monitoring signal</td>
+          <td>A severity level (<span class="mono">SEV1&ndash;SEV4</span>), affected services, and leads for the Investigator</td>
+        </tr>
+        <tr>
+          <td><strong>Investigator</strong></td>
+          <td>Find the most likely root cause</td>
+          <td>Triage&rsquo;s output and the signal detail</td>
+          <td>A specific hypothesis, the evidence for it, and the causes it ruled out and why</td>
+        </tr>
+        <tr>
+          <td><strong>Commander</strong></td>
+          <td>Choose one remediation and justify it</td>
+          <td>Triage and Investigator output</td>
+          <td>One action &mdash; <span class="mono">rollback / restart / scale / failover / escalate / monitor</span> &mdash; with rationale, expected impact, and a rollback plan</td>
+        </tr>
+        <tr>
+          <td><strong>Communicator</strong></td>
+          <td>Draft stakeholder updates</td>
+          <td>Current incident state</td>
+          <td>Three messages &mdash; customer status page, engineering channel, leadership &mdash; each in its own register, plus a next-update time</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p>Every agent&rsquo;s output is validated against one shared schema before it is allowed to reach the next agent or the dashboard. That single typed contract is what keeps a multi-stage pipeline predictable instead of turning into a chain of loosely connected guesses.</p>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section class="block">
+    <p class="eyebrow">05</p>
+    <h2>The incident lifecycle</h2>
+    <p>Every incident, whatever its source, moves through the same seven stages.</p>
+    <div class="steps">
+      <div class="step"><div><h3>Detect</h3><p>A watched service fails its checks for long enough to count as a real problem, or an external monitoring tool fires a webhook. An incident is opened and tagged to the service and its owner.</p></div></div>
+      <div class="step"><div><h3>Triage</h3><p>Severity is assigned from the measured impact &mdash; error rate, latency, blast radius &mdash; and the incident is routed with initial leads.</p></div></div>
+      <div class="step"><div><h3>Notify (holding)</h3><p>A first &ldquo;we&rsquo;re on it&rdquo; message is drafted straight away, so no audience sits in silence while the cause is still being found.</p></div></div>
+      <div class="step"><div><h3>Investigate</h3><p>The failure&rsquo;s shape is matched against known incident signatures across infrastructure, network, and dependency categories, and a root-cause hypothesis is committed to with its evidence.</p></div></div>
+      <div class="step"><div><h3>Decide</h3><p>One remediation is selected and fully explained &mdash; why this action, why not the alternatives, and how to reverse it.</p></div></div>
+      <div class="step"><div><h3>Execute &amp; confirm</h3><p>The action is applied through the execution layer and the service&rsquo;s recovery is measured over real time until the error rate comes back to healthy &mdash; or clearly does not.</p></div></div>
+      <div class="step"><div><h3>Resolve &amp; report</h3><p>The incident is closed with an honest final status, a resolution report is sent by email and Slack, and the full timeline is stored for the postmortem.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ============ 06 ============ -->
+  <section class="block">
+    <p class="eyebrow">06</p>
+    <h2>Detection &mdash; two ways in</h2>
+
+    <h3>Built-in synthetic monitoring</h3>
+    <p>Add the URL of a service you want watched. Crisis Room polls it on an interval, keeps a rolling window of the actual status codes and response times it observed, and opens an incident only when that window shows genuine, sustained degradation &mdash; a run of failures, a sustained error rate, or a latency ceiling breached &mdash; never on a single slow response. When the service recovers, the monitor re-arms itself. If the failure changes character mid-incident, that is treated as a new problem.</p>
+
+    <h3>Webhook ingestion from existing tools</h3>
+    <p>Point a monitoring tool a team already runs &mdash; Datadog, PagerDuty, Prometheus Alertmanager, or any in-house alerting &mdash; at a single endpoint. A small per-source adapter translates that tool&rsquo;s payload into Crisis Room&rsquo;s one incident format, and the full pipeline runs with no one touching anything. Supporting a new tool means writing one adapter function; nothing else in the system changes.</p>
+
+    <div class="callout">
+      <p><strong>One always-on connection.</strong> A dashboard keeps a single live channel open. Any incident, from any source, appears on it automatically and updates until it resolves &mdash; nobody needs to know an incident&rsquo;s ID in advance.</p>
+    </div>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section class="block">
+    <p class="eyebrow">07</p>
+    <h2>Diagnosis and decision</h2>
+
+    <h3>Investigator &mdash; root cause</h3>
+    <p>A black-box monitor cannot read a team&rsquo;s deploy history or internal logs, but it can see the <em>shape</em> of a failure: the mix of status codes, how far latency has moved from baseline, whether requests are erroring or timing out, and when the onset was. The Investigator matches that shape against a library of known incident signatures &mdash; a code regression from a recent change, capacity exhaustion, an unreachable upstream dependency, a network fault &mdash; and commits to the best fit, stating explicitly which other causes it ruled out and on what grounds. That breadth is what makes the diagnosis trustworthy rather than a single guess.</p>
+
+    <h3>Commander &mdash; the call</h3>
+    <p>The Commander selects exactly one action from a fixed set &mdash; <span class="mono">rollback, restart, scale, failover, escalate, monitor</span> &mdash; and records the rationale in plain language, the expected impact, a confidence level, and a rollback plan. It never returns a bare action with no reasoning; the explanation is the point. Its selection criteria come from a scoring rubric carried over from the team&rsquo;s earlier incident-response work:</p>
+
+    <div class="tbl-wrap">
+    <table>
+      <caption>What &ldquo;good incident command&rdquo; is scored on</caption>
+      <thead><tr><th>Criterion</th><th style="text-align:right">Weight</th><th>Measures</th></tr></thead>
+      <tbody>
+        <tr><td>Resolution correctness</td><td class="act" style="text-align:right">35%</td><td>Right root cause <em>and</em> right remediation</td></tr>
+        <tr><td>Time efficiency</td><td class="act" style="text-align:right">20%</td><td>A faster correct resolution scores higher</td></tr>
+        <tr><td>Communication quality</td><td class="act" style="text-align:right">20%</td><td>Stakeholders updated at the right intervals</td></tr>
+        <tr><td>Routing accuracy</td><td class="act" style="text-align:right">15%</td><td>The right questions sent to the right analysis path</td></tr>
+        <tr><td>Postmortem quality</td><td class="act" style="text-align:right">10%</td><td>Cause, impact, and action items stated correctly</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section class="block">
+    <p class="eyebrow">08</p>
+    <h2>Real remediation</h2>
+    <p>Crisis Room does not stop at a recommendation. The Commander&rsquo;s action is handed to an execution layer that carries it out, and the target&rsquo;s recovery is then measured &mdash; not projected &mdash; over real wall-clock time.</p>
+
+    <h3>Against a service Crisis Room controls</h3>
+    <p>The build ships with a live target service that has real, injectable faults and a real control interface. When the Commander picks <span class="mono">rollback</span> and the executor calls the control interface, that service genuinely stops failing and its error rate genuinely comes down on the next polls. If the Commander picks the wrong action, it genuinely does not &mdash; the recovery chart stays flat at the real, unchanged error rate. The full loop &mdash; decide, execute, confirm &mdash; is proven, not simulated.</p>
+
+    <h3>Against an external service</h3>
+    <p>For a service Crisis Room has no control channel to, it is honest about the boundary: the diagnosis and the recommended action are delivered in full, the recovery view is clearly labelled a projection rather than a measurement, and a person or a connected automation carries out the fix.</p>
+
+    <h3>Against real infrastructure</h3>
+    <p>The agents, the orchestrator, and the dashboard only ever talk to one execution interface. Swapping the sandbox target for a real Kubernetes cluster, cloud API, or deploy pipeline is a single new implementation of that interface &mdash; nothing upstream changes. A recommend-only mode, where the decision is logged but nothing is touched, is a one-setting switch.</p>
+  </section>
+
+  <!-- ============ 09 ============ -->
+  <section class="block">
+    <p class="eyebrow">09</p>
+    <h2>Honest outcomes</h2>
+    <p>An incident is only marked resolved when the service is actually measured healthy again &mdash; not just because the pipeline finished running. Every incident ends in one of three states:</p>
+    <div class="status-key">
+      <div><span class="tag ok">RESOLVED</span><p>The remediation was applied and the service&rsquo;s measured error rate came back to healthy.</p></div>
+      <div><span class="tag bad">MITIGATION FAILED</span><p>The remediation was applied but the service is still degraded &mdash; the wrong action, or a cause outside Crisis Room&rsquo;s control. Flagged for a person to take over.</p></div>
+      <div><span class="tag wait">AWAITING EXECUTION</span><p>Diagnosed and decided, but there is no control channel to carry the fix out. The recovery shown is a projection.</p></div>
+    </div>
+    <p style="margin-top:18px">This matters because a system that always reports success is worse than useless during a real incident. The dashboard surfaces the count of incidents that need attention, not just the count that closed.</p>
+  </section>
+
+  <!-- ============ 10 ============ -->
+  <section class="block">
+    <p class="eyebrow">10</p>
+    <h2>Communication</h2>
+    <p>Silence during a live incident is itself a failure. The Communicator drafts three messages for every incident, each written for its audience:</p>
+    <ul>
+      <li><strong>Customer status page</strong> &mdash; plain language, apologetic but not alarmist, no internal jargon.</li>
+      <li><strong>Engineering channel</strong> &mdash; technical and terse: root cause, the action being taken, why.</li>
+      <li><strong>Leadership</strong> &mdash; framed on business impact and expected recovery time, not implementation detail.</li>
+    </ul>
+    <p>A holding message goes out right after triage; the full report goes out on resolution. Delivery is by email to the account owner and, optionally, to a Slack channel via an incoming webhook the user configures in settings. Each incident record keeps a log of exactly what was sent and where.</p>
+  </section>
+
+  <!-- ============ 11 ============ -->
+  <section class="block">
+    <p class="eyebrow">11</p>
+    <h2>Two surfaces</h2>
+
+    <h3>The live console</h3>
+    <p>Open, no login, always listening. It is what an operator leaves open all day: an incident feed that populates itself, and for each incident a pipeline rail, a panel per agent showing its output, a running decision log, and a live recovery chart. Three scripted scenarios &mdash; a capacity outage, a bad deploy, a network partition &mdash; give a repeatable walkthrough that reaches a different correct decision each time from different evidence.</p>
+
+    <h3>The accounts area</h3>
+    <p>Sign in with an email and password. Register the services you want watched and set each one&rsquo;s thresholds and poll interval. Browse your incident history, open any incident to replay its full timeline stage by stage, and configure where resolution reports are delivered. Each user sees only their own services and incidents.</p>
+  </section>
+
+  <!-- ============ 12 ============ -->
+  <section class="block">
+    <p class="eyebrow">12</p>
+    <h2>System architecture</h2>
+
+    <div class="flow">Monitoring tool  ──webhook──┐
+Built-in synthetic monitor ─┤
+                            ▼
+              <b>Incident signal</b>  (one shared typed format)
+                            │
+                            ▼
+   <b>Triage</b> ─▶ <b>Investigator</b> ─▶ <b>Commander</b> ─▶ <b>Communicator</b>
+                            │
+                            ▼
+            <b>Execution layer</b> ─▶ target service / real infra
+                            │
+                            ▼
+   Persisted timeline  +  live dashboard stream  +  notifications</div>
+
+    <div class="tbl-wrap">
+    <table>
+      <caption>Components</caption>
+      <thead><tr><th>Component</th><th>Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Orchestrator</strong></td><td>Runs the four agents in order and emits each result the instant it is produced</td></tr>
+        <tr><td><strong>Agents</strong></td><td>Triage, Investigator, Commander, Communicator &mdash; each a self-contained unit with one job and a typed output</td></tr>
+        <tr><td><strong>Adapters</strong></td><td>Normalize Datadog / PagerDuty / Prometheus / generic webhook payloads into the shared incident format</td></tr>
+        <tr><td><strong>Synthetic monitor</strong></td><td>One background task per watched service; polls, keeps a rolling window, decides when a real incident exists</td></tr>
+        <tr><td><strong>Execution layer</strong></td><td>Applies the chosen action and streams measured recovery; one interface, swappable backend</td></tr>
+        <tr><td><strong>Target service</strong></td><td>A controlled service with injectable faults and a control interface, for proving the loop end to end</td></tr>
+        <tr><td><strong>API layer</strong></td><td>REST endpoints plus WebSocket streams for the live feed and per-incident replay</td></tr>
+        <tr><td><strong>Persistence</strong></td><td>Accounts, watched services, incidents, and the ordered event log for each incident</td></tr>
+        <tr><td><strong>Dashboard</strong></td><td>Renders the live stream: pipeline rail, agent panels, decision log, recovery chart</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============ 13 ============ -->
+  <section class="block">
+    <p class="eyebrow">13</p>
+    <h2>Data model</h2>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Record</th><th>Holds</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">users</span></td><td>Email, hashed password, optional Slack webhook, created date</td></tr>
+        <tr><td><span class="mono">monitored&nbsp;services</span></td><td>Owner, URL, display name, thresholds, poll interval, active flag</td></tr>
+        <tr><td><span class="mono">incidents</span></td><td>Owner, service, source, title, severity, status, the triggering signal, the resolution summary, timestamps</td></tr>
+        <tr><td><span class="mono">incident&nbsp;events</span></td><td>Every agent output and lifecycle event for an incident, stored in order &mdash; the replayable timeline</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Because every step is persisted as it happens, an incident detail view is a faithful replay of what occurred, in sequence, not a summary reconstructed after the fact.</p>
+  </section>
+
+  <!-- ============ 14 ============ -->
+  <section class="block">
+    <p class="eyebrow">14</p>
+    <h2>Design principles</h2>
+    <h3>One typed contract between every stage</h3>
+    <p>Nothing crosses from one agent to the next as free text. Every output is validated against a shared schema first. This is the single biggest reason a multi-stage pipeline stays reliable.</p>
+    <h3>A deterministic core</h3>
+    <p>The classification and decision logic runs fully offline, with the same typed outputs, against a library of incident signatures and thresholds. A weak venue network cannot take down a demo, and a production deployment does not hinge on an external service being reachable.</p>
+    <h3>One execution interface</h3>
+    <p>The agents, orchestrator, and dashboard know nothing about how a fix is carried out. Moving from a sandbox to real infrastructure &mdash; or inserting a human-approval gate &mdash; is a change in exactly one place.</p>
+    <h3>The demo surface is frozen</h3>
+    <p>The public console and its scripted scenarios never write to the database, never send real email, and never touch real infrastructure. The product features are built strictly alongside it.</p>
+    <h3>Security</h3>
+    <p>Accounts use email and password with hashed storage. Sessions are signed tokens held in http-only cookies. Every read is scoped to the requesting user.</p>
+  </section>
+
+  <!-- ============ 15 ============ -->
+  <section class="block">
+    <p class="eyebrow">15</p>
+    <h2>Technology</h2>
+    <div class="stack">
+      <section>
+        <h3>Backend</h3>
+        <ul>
+          <li>Python 3 <span>language</span></li>
+          <li>FastAPI <span>REST + WebSocket</span></li>
+          <li>Uvicorn <span>ASGI server</span></li>
+          <li>SQLAlchemy 2 <span>ORM</span></li>
+          <li>SQLite <span>embedded database</span></li>
+          <li>Pydantic 2 <span>typed contracts</span></li>
+          <li>pydantic-settings <span>configuration</span></li>
+          <li>httpx <span>async HTTP client</span></li>
+          <li>PyJWT <span>session tokens</span></li>
+          <li>passlib + bcrypt <span>password hashing</span></li>
+          <li>Resend <span>email delivery</span></li>
+        </ul>
+      </section>
+      <section>
+        <h3>Frontend</h3>
+        <ul>
+          <li>Next.js 14 <span>App Router</span></li>
+          <li>React 18 <span>UI</span></li>
+          <li>CSS variables + styled-jsx <span>scoped styling</span></li>
+          <li>lucide <span>icon set</span></li>
+          <li>Custom SVG <span>brand mark</span></li>
+        </ul>
+      </section>
+      <section>
+        <h3>Interfaces &amp; patterns</h3>
+        <ul>
+          <li>WebSocket streaming <span>live feed + replay</span></li>
+          <li>Webhook ingestion <span>per-source adapters</span></li>
+          <li>Async background tasks <span>one per watched service</span></li>
+          <li>JWT in http-only cookie <span>sessions</span></li>
+          <li>Single typed schema <span>every pipeline stage</span></li>
+        </ul>
+      </section>
+      <section>
+        <h3>Tooling &amp; deployment</h3>
+        <ul>
+          <li>Docker <span>backend container</span></li>
+          <li>Playwright <span>headless visual QA</span></li>
+          <li>python-dotenv <span>environment config</span></li>
+          <li>Next build pipeline <span>static + server</span></li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 16 ============ -->
+  <section class="block">
+    <p class="eyebrow">16</p>
+    <h2>What is built today</h2>
+    <p>Everything described in this brief is implemented and verified working end to end:</p>
+    <ul>
+      <li>Both detection paths &mdash; built-in synthetic monitoring and webhook ingestion for Datadog, PagerDuty, Prometheus, and generic sources.</li>
+      <li>The complete four-agent pipeline with the shared typed contract and the deterministic offline core.</li>
+      <li>Real execution against the controlled target service, proven for every fault type &mdash; the correct action fixes it, a wrong action measurably does not.</li>
+      <li>The honest three-state outcome logic, driven by measured recovery.</li>
+      <li>Email delivery of resolution reports, plus the optional Slack channel.</li>
+      <li>The always-on live console with pipeline rail, agent panels, decision log, and live recovery chart.</li>
+      <li>The accounts area &mdash; registration, per-service monitoring configuration, incident history, full timeline replay, notification settings.</li>
+      <li>Persistence of every incident and every step within it.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 17 ============ -->
+  <section class="block">
+    <p class="eyebrow">17</p>
+    <h2>Roadmap</h2>
+    <ul>
+      <li><strong>Production execution backends</strong> &mdash; ready-made implementations of the execution interface for Kubernetes, major cloud providers, and common deploy pipelines.</li>
+      <li><strong>Human-approval gate</strong> &mdash; an optional confirmation step before any action touches real infrastructure, which is what most organizations require.</li>
+      <li><strong>More monitoring integrations</strong> &mdash; additional source adapters; each is a single function.</li>
+      <li><strong>Multi-instance deployment</strong> &mdash; move the background monitoring and pipeline work behind a shared queue so the platform scales past one process.</li>
+      <li><strong>Richer postmortems</strong> &mdash; auto-drafted incident write-ups with timeline, impact, and action items from the stored event log.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 18 ============ -->
+  <section class="block">
+    <p class="eyebrow">18</p>
+    <h2>Appendix</h2>
+
+    <h3>Running it locally</h3>
+    <div class="flow">Backend   pip install -r requirements.txt
+          uvicorn server.main:app --port 8000
+
+Frontend  cd frontend &amp;&amp; npm install &amp;&amp; npm run dev
+          open http://localhost:3000</div>
+
+    <h3>Key endpoints</h3>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Endpoint</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">POST /api/webhooks/{source}</span></td><td>Ingest an alert from an external monitoring tool</td></tr>
+        <tr><td><span class="mono">WS&nbsp;&nbsp;/ws/live</span></td><td>Always-on stream of every incident as it happens</td></tr>
+        <tr><td><span class="mono">POST /api/auth/signup</span></td><td>Create an account</td></tr>
+        <tr><td><span class="mono">POST /api/sites</span></td><td>Register a service to monitor</td></tr>
+        <tr><td><span class="mono">GET&nbsp;&nbsp;/api/incidents</span></td><td>The signed-in user&rsquo;s incident history</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Suggested eight-slide breakdown</h3>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Slide</th><th>Draw from</th></tr></thead>
+      <tbody>
+        <tr><td>1 &nbsp; Problem</td><td>Section 02</td></tr>
+        <tr><td>2 &nbsp; Solution</td><td>Sections 01, 03</td></tr>
+        <tr><td>3 &nbsp; How it works &mdash; the pipeline</td><td>Sections 04, 05</td></tr>
+        <tr><td>4 &nbsp; Detection &amp; integration</td><td>Section 06</td></tr>
+        <tr><td>5 &nbsp; Real remediation &amp; honest outcomes</td><td>Sections 08, 09</td></tr>
+        <tr><td>6 &nbsp; Architecture</td><td>Section 12</td></tr>
+        <tr><td>7 &nbsp; Technology &amp; what&rsquo;s built</td><td>Sections 15, 16</td></tr>
+        <tr><td>8 &nbsp; Roadmap &amp; impact</td><td>Section 17</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <footer class="brief-foot">
+    <span>Crisis Room &mdash; Project Brief</span>
+    <span>Team Gol_Gappe</span>
+  </footer>
+
+</main>
+</body>
+</html>
