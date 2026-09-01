@@ -1,132 +1,94 @@
 # Crisis Room
 
-**Multi-agent AI incident response for enterprises.**
-Team Gol_Gappe — Riddhika Sachdeva, Hemank — MAIT, Delhi
-Build with Bharat 2.0, National Level Hackathon (NIT Delhi, organized by CodeVerse)
+**Automated incident response — detect a failing service, diagnose the cause, apply the fix, and confirm recovery, with every step streamed live to a dashboard.**
 
-Crisis Room runs incident response the way a coordinated on-call team would,
-except four specialized AI agents do it in parallel instead of one overloaded
-human at 2:47 AM: **Triage → Investigator → Commander → Communicator**, every
-decision streamed live to a dashboard instead of hidden in a Slack thread.
+Team **Gol_Gappe** — Riddhika Sachdeva & Hemank Aggarwal (MAIT, Delhi)
+Build with Bharat 2.0 · National Level Hackathon · NIT Delhi (organized by CodeVerse)
 
-This repo is a real, running implementation — not a mockup. Every agent
-produces typed, validated JSON (Pydantic), the orchestrator chains them and
-streams results over a WebSocket the moment they're produced, and the
-dashboard renders that stream live.
+![Crisis Room console](docs/console.png)
 
 ---
 
-## Architecture
+## What it does
+
+When a production service breaks, one on-call engineer has to do four jobs at once under a clock: work out how bad it is, find the cause, choose a fix, and keep everyone informed. Crisis Room runs that whole loop on its own.
+
+You tell it which services to watch. From then on it opens an incident the moment one genuinely degrades, works it end to end through four specialized agents, executes the chosen remediation, measures the real recovery, and delivers the resolution report — while a live dashboard renders each agent's output as it's produced.
+
+This repo is a working implementation, verified end to end — not a mockup.
+
+---
+
+## How it works
 
 ```
-Real monitoring tool (Datadog/PagerDuty/Prometheus/your own)
-        │  webhook fires automatically, zero human involved
-        ▼
-POST /api/webhooks/{source}  →  adapter normalizes to IncidentSignal
-        │
-        ▼
-Triage Agent → Investigator Agent → Commander Agent → Communicator Agent
-        │                                   │
-        │                                   ▼
-        │                     Execution seam (integrations/executor.py)
-        │                     "recommends" today; a company plugs in
-        │                     their own infra integration to "execute"
-        │
-        ▼
-Broadcast to every dashboard on /ws/live — incidents just appear, live
+Monitoring tool  ──webhook──┐
+Built-in synthetic monitor ─┤
+                            ▼
+              Incident signal  (one shared typed format)
+                            │
+                            ▼
+   Triage ─▶ Investigator ─▶ Commander ─▶ Communicator
+                            │
+                            ▼
+            Execution layer ─▶ target service / real infra
+                            │
+                            ▼
+   Persisted timeline  +  live dashboard stream  +  notifications
 ```
 
-(Communicator also fires an early "we're on it" notice right after Triage.)
-
-| Agent | Job | Input | Output |
+| Agent | Job | Takes in | Produces |
 |---|---|---|---|
-| **Triage** | Classifies severity fast | raw alert/telemetry | SEV1–SEV4, affected services, leads for Investigator |
-| **Investigator** | Root-cause analysis across DB/network/security | Triage output | hypothesis, evidence, ruled-out causes |
-| **Commander** | Picks a remediation action, explains why | Triage + Investigator output | action (rollback/restart/scale/failover/escalate/monitor), rationale |
-| **Communicator** | Drafts stakeholder-specific updates | current incident state | customer / internal-eng / leadership messages |
+| **Triage** | Classify severity, flag what to look at | The raw alert / monitoring signal | Severity (`SEV1`–`SEV4`), affected services, leads |
+| **Investigator** | Find the most likely root cause | Triage output + signal detail | A specific hypothesis, its evidence, and the causes ruled out and why |
+| **Commander** | Choose one remediation and justify it | Triage + Investigator output | One action (`rollback` / `restart` / `scale` / `failover` / `escalate` / `monitor`) with rationale, expected impact, rollback plan |
+| **Communicator** | Draft stakeholder updates | Current incident state | Three messages — customer status page, engineering, leadership — plus a next-update time |
 
-Every agent output is validated against a Pydantic schema (`agents/models.py`)
-before it's allowed to reach the next agent or the dashboard — this is what
-keeps a 4-agent pipeline reliable instead of turning into a chatbot with
-extra steps.
+Every agent's output is validated against one shared schema (`agents/models.py`) before it can reach the next agent or the dashboard. That single typed contract is what keeps a multi-stage pipeline predictable. The classification and decision logic also runs fully offline against a library of incident signatures and thresholds, so a weak network can't break a demo and the pipeline doesn't depend on any external service being reachable.
 
-### Real AI, with a safety net
-Every agent calls Claude (`claude-sonnet-4-6` by default) when
-`ANTHROPIC_API_KEY` is set in the environment. If it isn't set, each agent
-falls back to deterministic rule-based logic that still produces the same
-typed output — so a bad-wifi venue can't take down your demo. Check which
-mode you're in via `GET /api/health` (`llm_mode: "live"` or
-`"offline_fallback"`), and it's also shown live in the dashboard header.
+The Communicator fires twice — an early "we're on it" notice right after Triage so no audience sits in silence, and the resolution update at the end.
 
 ---
 
-## From demo to product: how this actually gets adopted
+## Detection — two ways in
 
-The 3 scripted scenarios are there so a hackathon demo is deterministic and
-repeatable. But the real product doesn't wait for someone to click a
-button — it reacts automatically the moment a company's existing monitoring
-stack detects a problem. Three pieces make that true today, not just in
-theory:
+**Built-in synthetic monitoring.** Register a service URL. Crisis Room polls it on an interval, keeps a rolling window of the actual status codes and response times it observed, and opens an incident only on sustained, genuine degradation — a run of failures, a sustained error rate, or a breached latency ceiling — never on a single slow response. It re-arms when the service recovers, and treats a change in the failure's character mid-incident as a new problem.
 
-### 1. Automatic ingestion from real monitoring tools
-`integrations/adapters.py` translates a real webhook payload from Datadog,
-PagerDuty, or Prometheus Alertmanager into our one shared `IncidentSignal`
-contract. Point that tool's webhook config at:
+**Webhook ingestion.** Point an existing monitoring tool at one endpoint:
 
 ```
 POST /api/webhooks/{datadog|pagerduty|prometheus|generic}
 ```
 
-...and the full 4-agent pipeline runs with **zero human involvement** —
-verified end to end in this build (fire a fake Prometheus alert, watch it
-get diagnosed and resolved with no one clicking anything). A company with
-its own in-house alerting doesn't even need a new adapter: `generic`
-accepts our `IncidentSignal` shape directly.
+`integrations/adapters.py` normalizes each tool's payload into the shared incident format and the full pipeline runs with no human involvement. A tool that isn't covered yet works through `generic`, or gets support by adding one adapter function — nothing else in the pipeline changes.
 
-Adding support for a monitoring tool we don't cover yet means writing one
-new function in `adapters.py` — nothing else in the pipeline changes. That's
-the entire point of validating everything against one typed contract.
+**One always-on connection.** `GET /ws/live` is a single stream a dashboard keeps open; any incident, from any source, appears on it automatically and updates until it resolves.
 
-### 2. An always-on dashboard, not a per-incident link
-A real on-call engineer doesn't know an `incident_id` in advance. `GET
-/ws/live` is a single connection a dashboard keeps open permanently;
-**any** incident, from **any** source, appears on it automatically the
-moment it starts, and updates live until it resolves. The demo UI's
-"Live incident feed" panel is this exact connection — the scenario buttons
-below it are just a convenient way to generate a webhook-shaped event for
-rehearsal, not a separate code path.
+---
 
-### 3. Real execution against a safely sandboxed target
-Crisis Room **does execute its recommended remediation automatically**, by
-default, in this build. `integrations/executor.py`'s `MockInfraExecutor`
-applies the Commander's action to a live target service this build
-actually owns (`integrations/mock_infra.py`) and streams that service's
-**real** recovery back to the dashboard — the error-rate curve you see is
-a genuine state change from a genuine function call over real wall-clock
-time, not a precomputed formula.
+## Real execution, honest outcomes
 
-What it does *not* do: touch a customer's real production infrastructure.
-This build has no real cloud credentials to point at, and faking that
-connection would be dishonest regardless of how convincing it looked in a
-demo. What's real is the automation loop itself — diagnose, decide,
-execute, confirm recovery — proven end to end against a target Crisis Room
-actually controls.
+Crisis Room doesn't stop at a recommendation. The Commander's action is handed to an execution layer that carries it out, and the target's recovery is then **measured**, tick by tick, over real time.
 
-Adopting this for real production infrastructure is a one-file change:
-implement `RemediationExecutor` against a real Kubernetes/cloud/deploy API
-(see the commented `KubernetesExecutor` sketch in `executor.py` for the
-shape it takes) and return it from `get_executor()`. Nothing upstream — the
-4 agents, the orchestrator, the dashboard — has to change, because they
-only ever talk to that one interface. Most real deployments would also gate
-that class behind a human approval step before it's allowed to call
-anything, since that's what enterprises require for production changes
-regardless of who initiates them — this build's own competitive-advantage
-slide argues exactly that.
+The build ships with a target service (`integrations/target_service.py`) that has real, injectable faults and a real control interface. When the Commander picks the right action, that service genuinely stops failing and recovers on the next polls. When it picks the wrong one, it genuinely doesn't — the recovery curve stays flat at the real error rate.
 
-Prefer recommend-only mode with zero automation? Set
-`CRISIS_ROOM_EXECUTOR=noop` and the Commander's decision is logged but
-nothing is touched — the dashboard falls back to a clearly labeled
-*simulated* recovery projection (`agents/executor.py`) instead of a live one.
+Every incident ends in one of three honest states:
+
+| State | Meaning |
+|---|---|
+| **resolved** | Remediation applied, service measured healthy again |
+| **mitigation failed** | Remediation applied but the service is still degraded — flagged for a person |
+| **awaiting execution** | Diagnosed and decided, but no control channel to carry the fix out |
+
+The execution layer is one interface. Pointing it at a real Kubernetes cluster, cloud API, or deploy pipeline is a single new implementation — the agents, orchestrator, and dashboard don't change. A recommend-only mode (`CRISIS_ROOM_EXECUTOR=noop`) logs the decision and touches nothing.
+
+---
+
+## Two surfaces
+
+**The live console** (`/console`) — open, no login, always listening. An incident feed that populates itself, and for each incident a pipeline rail, a panel per agent, a running decision log, and a live recovery chart. Three scripted scenarios give a repeatable walkthrough that reaches a different correct decision each time from different evidence.
+
+**The accounts area** (`/app`) — sign in with an email and password, register the services you want watched and their thresholds, browse your incident history, replay any incident's full timeline stage by stage, and configure where resolution reports are delivered (email, and optionally a Slack channel).
 
 ---
 
@@ -134,189 +96,100 @@ nothing is touched — the dashboard falls back to a clearly labeled
 
 ```
 crisis-room/
-├── agents/            # the 4 agents + shared Pydantic contract + LLM wrapper
-│   ├── models.py
-│   ├── llm.py
-│   ├── triage.py
-│   ├── investigator.py
-│   ├── commander.py
-│   ├── communicator.py
-│   └── executor.py         # SIMULATED recovery-curve visualization (not real infra)
+├── agents/            Triage, Investigator, Commander, Communicator + the shared Pydantic contract
+├── orchestrator/      Chains the agents, yields each result the instant it's produced
 ├── integrations/
-│   ├── adapters.py           # normalizes Datadog/PagerDuty/Prometheus/generic webhooks
-│   ├── mock_infra.py          # a REAL sandboxed target service Crisis Room actually controls
-│   └── executor.py             # execution seam - applies the fix to mock_infra by default
-├── orchestrator/
-│   └── orchestrator.py        # chains agents, yields AgentEvents as they happen
-├── server/
-│   └── main.py                 # FastAPI REST + WebSocket layer, webhook ingestion, live feed
-├── fixtures/
-│   └── scenarios.py             # 3 scripted demo incidents
-├── frontend/                     # Next.js dashboard
-│   ├── app/                      # page, layout, design tokens (globals.css)
-│   ├── components/                # PipelineRail, AgentPanel, ReasoningTerminal,
-│   │                               # LiveIncidentFeed, RecoveryChart
-│   └── lib/api.js                 # REST + WebSocket client (incl. always-on live feed)
-├── Dockerfile                       # backend container
-├── requirements.txt
-└── README.md
+│   ├── adapters.py         Datadog / PagerDuty / Prometheus / generic webhook normalizers
+│   ├── synthetic_monitor.py  Polls a URL, rolling window, decides when a real incident exists
+│   ├── executor.py           Execution layer — applies the action, streams measured recovery
+│   ├── target_service.py     A controlled service with injectable faults + a control interface
+│   └── mock_infra.py         Sandboxed recovery target
+├── monitoring/        Background task per watched service; runs + persists the pipeline
+├── api/               Authenticated REST — accounts, sites, incidents, account settings
+├── auth/              Email + password, signed-cookie sessions
+├── db/                SQLAlchemy models + engine (SQLite)
+├── persistence/       Incident + event read/write helpers
+├── server/main.py     FastAPI REST + WebSocket layer, webhook ingestion, live feed
+├── fixtures/          The 3 scripted demo scenarios
+├── config.py          Environment-driven settings
+├── docs/              Project brief (HTML + PDF), screenshots
+├── frontend/          Next.js dashboard (App Router)
+│   ├── app/                pages, layout, design tokens (globals.css)
+│   ├── components/         PipelineRail, AgentPanel, ReasoningTerminal, RecoveryChart, …
+│   └── lib/                REST + WebSocket clients
+├── Dockerfile         Backend container
+└── requirements.txt
 ```
 
 ---
 
-## Running it locally
+## Running locally
 
-### 1. Backend
+### Backend
 
 ```bash
-cd crisis-room
 pip install -r requirements.txt
 
-# optional — enables live Claude reasoning instead of the offline fallback
-export ANTHROPIC_API_KEY=sk-ant-...
+cp .env.example .env
+# set SESSION_SECRET (any long random string); the rest have working defaults
+#   python -c "import secrets; print(secrets.token_urlsafe(64))"
 
 uvicorn server.main:app --reload --port 8000
 ```
 
-Check it's up: `curl http://localhost:8000/api/health`
+Check it: `curl http://localhost:8000/api/health`
 
-### 2. Frontend
+The `/console` demo needs nothing configured. The authenticated area needs `SESSION_SECRET`; email notifications need a `RESEND_API_KEY` (see `.env.example`).
+
+### Frontend
 
 ```bash
-cd crisis-room/frontend
+cd frontend
 npm install
 npm run dev
 ```
 
-Open **http://localhost:3000** for the landing page, or go straight to
-**http://localhost:3000/console** for the live dashboard. The console is
-where the actual product lives — pick a scenario button and watch the
-pipeline rail, agent panels, and reasoning terminal update live over
-WebSocket as each agent finishes.
+Open **http://localhost:3000** for the landing page, **/console** for the live demo dashboard, or **/signup** to create an account. If the backend isn't on `localhost:8000`, set `NEXT_PUBLIC_API_BASE` before `npm run dev`.
 
-If your backend isn't on `localhost:8000`, set `NEXT_PUBLIC_API_BASE` before
-`npm run dev` / `npm run build`.
-
-### 3. Docker (backend only)
+### Docker (backend)
 
 ```bash
 docker build -t crisis-room-api .
-docker run -p 8000:8000 -e ANTHROPIC_API_KEY=sk-ant-... crisis-room-api
+docker run -p 8000:8000 -e SESSION_SECRET=$(python -c "import secrets;print(secrets.token_urlsafe(64))") crisis-room-api
 ```
 
 ---
 
-## The 3 demo scenarios
+## Demo scenarios
 
-Per the build brief, these are scripted fixtures so the dashboard tells a
-coherent, verifiable story every run — no LLM randomness required for a
-correct demo:
+Scripted fixtures so a walkthrough tells the same verifiable story every run:
 
-| Scenario key | Story | Correct diagnosis | Correct action |
+| Scenario | Story | Correct diagnosis | Correct action |
 |---|---|---|---|
 | `payment-outage` | 42% error rate, DB pool near max, no recent deploy | connection pool exhaustion | **SCALE** |
-| `bad-deploy` | Errors start right after a schema-migration deploy | deploy/migration regression | **ROLLBACK** |
+| `bad-deploy` | Errors start right after a schema-migration deploy | deploy / migration regression | **ROLLBACK** |
 | `network-partition` | Cross-region timeouts, packet loss on the link | cross-region network degradation | **FAILOVER** |
-
-Run any of them directly against the API without the UI:
 
 ```bash
 curl -X POST http://localhost:8000/api/incidents/scenario/payment-outage
 # -> {"incident_id": "INC-XXXXXXXX"}
-# then connect a WebSocket client to ws://localhost:8000/ws/INC-XXXXXXXX
 ```
 
 ---
 
-## Demo script (rehearse this)
+## Tech stack
 
-1. Open the dashboard. It's already listening — the **LISTENING FOR
-   INCIDENTS** badge and empty "Live incident feed" panel are the real
-   product state, not a loading screen. Say so explicitly: *"this is what
-   an on-call engineer leaves open all day — nothing to click yet because
-   nothing's broken yet."*
-2. Trigger `payment-outage` from the scenario list — narrate it as standing
-   in for a Datadog alert firing, since it goes through the identical
-   `POST /api/webhooks/...` code path a real integration would use. Watch
-   it appear in the live feed automatically, not because you clicked into
-   a specific incident.
-3. Narrate as it streams:
-   - Triage classifies SEV1 in under a second — $300K/min is on the line.
-   - Communicator fires immediately with a holding message — no silence.
-   - Investigator rules out network and security explicitly, lands on
-     connection-pool exhaustion with evidence.
-   - Commander explains *why* SCALE and not ROLLBACK — this is the
-     explainability judges care about most.
-   - Point out the **execution note**: "Executed — applied to a sandboxed
-     target service." This is genuinely running, not a canned animation —
-     say so, and point to `integrations/mock_infra.py` if asked how.
-   - Point out the **recovery chart**, labeled LIVE — the error rate is
-     dropping because the recommended action was actually applied to a
-     real (if sandboxed) target, tick by tick, over real wall-clock time.
-   - Communicator fires again with the resolution update.
-4. Run `bad-deploy` live to show the *same 4 agents* reach a *different,
-   correct* decision (ROLLBACK) from different evidence — this is what
-   proves it's real reasoning, not a hardcoded script.
-5. If you want to make the automatic-ingestion story concrete, fire a real
-   webhook from a terminal mid-demo and watch it appear in the feed with
-   nobody touching the UI:
-   ```bash
-   curl -X POST http://localhost:8000/api/webhooks/prometheus \
-     -H "Content-Type: application/json" \
-     -d '{"alerts":[{"labels":{"service":"auth-svc","error_rate_pct":"15"},"annotations":{"summary":"AuthDown","description":"auth-svc failing health checks"}}]}'
-   ```
-6. Close on the reasoning terminal: every decision is logged and inspectable,
-   nothing is a black box.
+**Backend** — Python · FastAPI · Uvicorn · SQLAlchemy 2 · SQLite · Pydantic 2 / pydantic-settings · httpx · PyJWT · passlib + bcrypt · Resend (email)
+
+**Frontend** — Next.js 14 (App Router) · React 18 · CSS variables + styled-jsx · lucide
+
+**Interfaces** — REST + WebSocket streaming · webhook ingestion with per-source adapters · async background monitoring tasks · one typed schema across every pipeline stage
+
+**Tooling** — Docker · Playwright (headless visual QA)
 
 ---
 
-## Where this comes from
+## License
 
-This evolves an earlier RL-based incident-response prototype by the same
-core team that reached the Grand Finale (top 3% of 70,000+ teams) at a
-national-level AI hackathon. That prototype modeled 6 conceptual roles, but
-only the Incident Commander was real RL-trained AI — the rest were
-deterministic by design, to keep training reward-hackproof. This build turns
-all of them into real, coordinated, autonomous agents behind a real UI.
-
-The Commander's reward rubric from that prototype (`agents/commander.py`,
-`REWARD_RUBRIC`) still defines what "good incident command" means here, and
-is used to prompt the LLM-driven Commander:
-
-| Component | Weight | What it measures |
-|---|---|---|
-| Resolution correctness | 35% | Right root cause **and** right remediation |
-| Time efficiency | 20% | Faster, correct resolution scores higher |
-| Communication quality | 20% | Stakeholders updated at the right intervals |
-| Delegation/routing accuracy | 15% | Right questions routed to the right specialist reasoning |
-| Postmortem quality | 10% | Root cause, impact, and ≥2 action items stated correctly |
-
----
-
-## Hackathon requirements checklist
-
-Main track — Build with Bharat 2.0:
-- [x] **Working implementation, not just slides** — this repo runs end to end (verified: all 3 scenarios, REST + WebSocket, offline fallback and live-LLM code paths).
-- [x] PPT template followed, 8 content slides — `Crisis_Room_NIT_Delhi_Final.pptx`.
-- [ ] **GitHub repository link** on the References slide — push this repo and add the link (see below).
-- [ ] **Live demo link** on the References slide — deploy backend + frontend and add the link (see below).
-
-Optional bonus track — Agentic Solutions: Powered by x402 (skip unless the
-core demo is rock-solid with time to spare — the brief is explicit that this
-is additive, not required, and the review is strict: live Algorand Testnet
-transaction, GoPlausible facilitator, `@x402-avm` deps, gating the
-Investigator endpoint). Not attempted here — flag if you want to pursue it
-next.
-
-### Still open (need your input / your accounts, not something I can do for you)
-1. **GitHub repo** — create it and push this code:
-   ```bash
-   git init && git add . && git commit -m "Crisis Room: 4-agent incident command platform"
-   git remote add origin https://github.com/<your-org>/crisis-room.git
-   git push -u origin main
-   ```
-2. **Live demo URL** — quickest path: backend to Render/Railway/Fly.io
-   (Dockerfile is ready), frontend to Vercel (`NEXT_PUBLIC_API_BASE` pointed
-   at your deployed backend URL). Say the word and I'll write the exact
-   deploy configs for whichever platform you want.
-3. Update slide 8 (References) with both links once you have them.
+GNU General Public License v3.0 — see [LICENSE](LICENSE).
+Copyright (C) 2026 Riddhika Sachdeva, Hemank Aggarwal.
